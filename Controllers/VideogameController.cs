@@ -31,48 +31,51 @@ public class VideogameController : ControllerBase
     }
     
     [HttpGet("{id:int}")]
-    public ActionResult<VideoGame> GetVideoGameById(int id)
+    public async Task<ActionResult<VideoGame>> GetVideoGameById(int id)
     {
-        var videoGame = _videoGames.FirstOrDefault(vg => vg.Id == id);
+        var videoGame = await _context.VideoGames.FindAsync(id);
         if (videoGame == null)
         {
             return NotFound();
         }
-        return Ok(videoGame);
+        return Ok(await _context.VideoGames.ToListAsync());
     }
     
     [HttpPost]
-    public ActionResult<VideoGame> Post(VideoGame videoGame)
+    public async Task<ActionResult<VideoGame>> Post(VideoGame videoGame)
     {
         videoGame.Id = _videoGames.Max(vg => vg.Id) + 1;
-        _videoGames.Add(videoGame);
+        await Task.Run(() => _videoGames.Add(videoGame)); // Mô phỏng xử lý bất đồng bộ
         return CreatedAtAction(nameof(GetVideoGameById), new { id = videoGame.Id }, videoGame);
     }
-    
+
     [HttpPut("{id:int}")]
-    public ActionResult<VideoGame> Put(int id, VideoGame videoGame)
+    public async Task<ActionResult<VideoGame>> Put(int id, VideoGame videoGame)
     {
-        var existingVideoGame = _videoGames.FirstOrDefault(vg => vg.Id == id);
+        var existingVideoGame = await Task.Run(() => _videoGames.FirstOrDefault(vg => vg.Id == id));
         if (existingVideoGame == null)
         {
             return NotFound();
         }
+
         existingVideoGame.Title = videoGame.Title;
         existingVideoGame.Platform = videoGame.Platform;
         existingVideoGame.Developer = videoGame.Developer;
         existingVideoGame.Publisher = videoGame.Publisher;
+
         return Ok(existingVideoGame);
     }
-    
+
     [HttpDelete("{id:int}")]
-    public ActionResult Delete(int id)
+    public async Task<ActionResult> Delete(int id)
     {
-        var videoGame = _videoGames.FirstOrDefault(vg => vg.Id == id);
+        var videoGame = await Task.Run(() => _videoGames.FirstOrDefault(vg => vg.Id == id));
         if (videoGame == null)
         {
             return NotFound();
         }
-        _videoGames.Remove(videoGame);
+
+        await Task.Run(() => _videoGames.Remove(videoGame));
         return NoContent();
     }
 
